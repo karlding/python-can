@@ -99,6 +99,13 @@ jobs:
         - travis_retry pip install -r requirements-lint.txt
       script:
         - black --check --verbose .
+    - stage: linter
+      name: "Type Checks"
+      python: "3.7"
+      before_install:
+        - travis_retry pip install -r requirements-lint.txt
+      script:
+        - mypy can/
     - stage: deploy
       name: "PyPi Deployment"
       python: "3.7"
