@@ -264,8 +264,14 @@ class BusABC(metaclass=ABCMeta):
         :param bool remove_tasks:
             Stop tracking the stopped tasks.
         """
-        for task in self._periodic_tasks:
-            task.stop(remove_task=remove_tasks)
+        if remove_tasks:
+            while self._periodic_tasks:
+                # remove_task=True results in the list being modified and the
+                # list element is deleted.
+                self._periodic_tasks[0].stop(remove_task=True)
+        else:
+            for task in self._periodic_tasks:
+                task.stop(remove_task=False)
 
     def __iter__(self):
         """Allow iteration on messages as they are received.
