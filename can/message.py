@@ -8,6 +8,7 @@ This module contains the implementation of :class:`can.Message`.
     starting with Python 3.7.
 """
 
+from typing import Optional
 
 from copy import deepcopy
 from math import isinf, isnan
@@ -48,18 +49,18 @@ class Message:
 
     def __init__(
         self,
-        timestamp=0.0,
-        arbitration_id=0,
-        is_extended_id=True,
-        is_remote_frame=False,
-        is_error_frame=False,
-        channel=None,
-        dlc=None,
-        data=None,
-        is_fd=False,
-        bitrate_switch=False,
-        error_state_indicator=False,
-        check=False,
+        timestamp: float = 0.0,
+        arbitration_id: int = 0,
+        is_extended_id: bool = True,
+        is_remote_frame: bool = False,
+        is_error_frame: bool = False,
+        channel: Optional[str] = None,
+        dlc: Optional[int] = None,
+        data: Optional[bytearray] = None,
+        is_fd: bool = False,
+        bitrate_switch: bool = False,
+        error_state_indicator: bool = False,
+        check: bool = False,
     ):
         """
         To create a message object, simply provide any of the below attributes
@@ -278,7 +279,7 @@ class Message:
                     "error state indicator is only allowed for CAN FD frames"
                 )
 
-    def equals(self, other, timestamp_delta=1.0e-6):
+    def equals(self, other: "Message", timestamp_delta: float = 1.0e-6) -> bool:
         """
         Compares a given message with this one.
 
