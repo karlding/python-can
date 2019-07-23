@@ -6,6 +6,8 @@ as a list of all available backends and some implemented
 CyclicSendTasks.
 """
 
+from typing import Iterable, List, Optional, Union
+
 import importlib
 import logging
 
@@ -17,7 +19,7 @@ log = logging.getLogger("can.interface")
 log_autodetect = log.getChild("detect_available_configs")
 
 
-def _get_class_for_interface(interface):
+def _get_class_for_interface(interface: str) -> BusABC:
     """
     Returns the main bus class for the given interface.
 
@@ -116,7 +118,9 @@ class Bus(BusABC):  # pylint disable=abstract-method
             return cls(channel, *args, **kwargs)
 
 
-def detect_available_configs(interfaces=None):
+def detect_available_configs(
+    interfaces: Optional[Union[str, Iterable[str]]] = None
+) -> List[dict]:
     """Detect all configurations/channels that the interfaces could
     currently connect with.
 
@@ -143,7 +147,7 @@ def detect_available_configs(interfaces=None):
         interfaces = (interfaces,)
     # else it is supposed to be an iterable of strings
 
-    result = []
+    result: List[dict] = []
     for interface in interfaces:
 
         try:
