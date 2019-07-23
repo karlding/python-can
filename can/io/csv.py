@@ -11,6 +11,9 @@ TODO: This module could use https://docs.python.org/2/library/csv.html#module-cs
       of a CSV file.
 """
 
+from typing import Iterable, Union
+import os
+
 from base64 import b64encode, b64decode
 
 from can.message import Message
@@ -39,7 +42,7 @@ class CSVWriter(BaseIOHandler, Listener):
     Each line is terminated with a platform specific line separator.
     """
 
-    def __init__(self, file, append=False):
+    def __init__(self, file: Union[str, os.PathLike], append: bool = False):
         """
         :param file: a path-like object or a file-like object to write to.
                      If this is a file-like object, is has to open in text
@@ -56,7 +59,7 @@ class CSVWriter(BaseIOHandler, Listener):
         if not append:
             self.file.write("timestamp,arbitration_id,extended,remote,error,dlc,data\n")
 
-    def on_message_received(self, msg):
+    def on_message_received(self, msg: Message):
         row = ",".join(
             [
                 repr(msg.timestamp),  # cannot use str() here because that is rounding
@@ -81,7 +84,7 @@ class CSVReader(BaseIOHandler):
     Any line separator is accepted.
     """
 
-    def __init__(self, file):
+    def __init__(self, file: Union[str, os.PathLike]):
         """
         :param file: a path-like object or as file-like object to read from
                      If this is a file-like object, is has to opened in text
@@ -89,7 +92,7 @@ class CSVReader(BaseIOHandler):
         """
         super().__init__(file, mode="r")
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Message]:
         # skip the header line
         try:
             next(self.file)
