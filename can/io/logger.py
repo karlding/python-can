@@ -4,6 +4,10 @@
 See the :class:`Logger` class.
 """
 
+from typing import Optional, Union
+
+import os
+
 import logging
 
 from ..listener import Listener
@@ -38,7 +42,7 @@ class Logger(BaseIOHandler, Listener):  # pylint: disable=abstract-method
     """
 
     @staticmethod
-    def __new__(cls, filename, *args, **kwargs):
+    def __new__(cls, filename: Optional[Union[str, os.PathLike]], *args, **kwargs):
         """
         :type filename: str or None or path-like
         :param filename: the filename/path the file to write to,
@@ -47,16 +51,23 @@ class Logger(BaseIOHandler, Listener):  # pylint: disable=abstract-method
 
         """
         if filename:
-            if filename.endswith(".asc"):
-                return ASCWriter(filename, *args, **kwargs)
-            elif filename.endswith(".blf"):
-                return BLFWriter(filename, *args, **kwargs)
-            elif filename.endswith(".csv"):
-                return CSVWriter(filename, *args, **kwargs)
-            elif filename.endswith(".db"):
-                return SqliteWriter(filename, *args, **kwargs)
-            elif filename.endswith(".log"):
-                return CanutilsLogWriter(filename, *args, **kwargs)
+            # Since we accept PathLike objects here, we don't have access to
+            # endswith. Thus, we convert to a string and then grab that value
+            if isinstance(filename, os.PathLike):
+                logfile = os.fspath(filename)
+            else:
+                logfile = filename
+
+            if logfile.endswith(".asc"):
+                return ASCWriter(logfile, *args, **kwargs)
+            elif logfile.endswith(".blf"):
+                return BLFWriter(logfile, *args, **kwargs)
+            elif logfile.endswith(".csv"):
+                return CSVWriter(logfile, *args, **kwargs)
+            elif logfile.endswith(".db"):
+                return SqliteWriter(logfile, *args, **kwargs)
+            elif logfile.endswith(".log"):
+                return CanutilsLogWriter(logfile, *args, **kwargs)
 
         # else:
         log.warning('unknown file type "%s", falling pack to can.Printer', filename)
