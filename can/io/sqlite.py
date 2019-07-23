@@ -6,6 +6,10 @@ Implements an SQL database writer and reader for storing CAN messages.
 .. note:: The database schema is given in the documentation of the loggers.
 """
 
+from typing import Generator, Iterator, Tuple, Union
+
+import os
+
 import time
 import threading
 import logging
@@ -32,7 +36,7 @@ class SqliteReader(BaseIOHandler):
     .. note:: The database schema is given in the documentation of the loggers.
     """
 
-    def __init__(self, file, table_name="messages"):
+    def __init__(self, file: Union[str, os.PathLike], table_name: str = "messages"):
         """
         :param file: a `str` or since Python 3.7 a path like object that points
                      to the database file to use
@@ -47,14 +51,16 @@ class SqliteReader(BaseIOHandler):
         self._cursor = self._conn.cursor()
         self.table_name = table_name
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Message]:
         for frame_data in self._cursor.execute(
             "SELECT * FROM {}".format(self.table_name)
         ):
             yield SqliteReader._assemble_message(frame_data)
 
     @staticmethod
-    def _assemble_message(frame_data):
+    def _assemble_message(
+        frame_data: Tuple[float, int, int, int, int, int, bytes]
+    ) -> Message:
         timestamp, can_id, is_extended, is_remote, is_error, dlc, data = frame_data
         return Message(
             timestamp=timestamp,
@@ -66,12 +72,12 @@ class SqliteReader(BaseIOHandler):
             data=data,
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         # this might not run in constant time
         result = self._cursor.execute("SELECT COUNT(*) FROM {}".format(self.table_name))
         return int(result.fetchone()[0])
 
-    def read_all(self):
+    def read_all(self) -> Iterator[Message]:
         """Fetches all messages in the database.
 
         :rtype: Generator[can.Message]
@@ -133,7 +139,7 @@ class SqliteWriter(BaseIOHandler, BufferedReader):
     MAX_BUFFER_SIZE_BEFORE_WRITES = 500
     """Maximum number of messages to buffer before writing to the database"""
 
-    def __init__(self, file, table_name="messages"):
+    def __init__(self, file: Union[str, os.PathLike], table_name: str = "messages"):
         """
         :param file: a `str` or since Python 3.7 a path like object that points
                      to the database file to use
