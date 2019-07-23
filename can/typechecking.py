@@ -1,4 +1,4 @@
-"""Types for mypy typechecking
+"""Types for mypy type-checking
 """
 import typing
 
