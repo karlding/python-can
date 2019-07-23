@@ -6,6 +6,9 @@ well as :class:`MessageSync` which plays back messages
 in the recorded order an time intervals.
 """
 
+from typing import Iterable, Iterator
+import can
+
 from time import time, sleep
 import logging
 
@@ -70,7 +73,13 @@ class MessageSync:
     Used to iterate over some given messages in the recorded time.
     """
 
-    def __init__(self, messages, timestamps=True, gap=0.0001, skip=60):
+    def __init__(
+        self,
+        messages: Iterable[can.message.Message],
+        timestamps: bool = True,
+        gap: float = 0.0001,
+        skip: float = 60,
+    ):
         """Creates an new **MessageSync** instance.
 
         :param Iterable[can.Message] messages: An iterable of :class:`can.Message` instances.
@@ -83,7 +92,7 @@ class MessageSync:
         self.gap = gap
         self.skip = skip
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[can.message.Message]:
         playback_start_time = time()
         recorded_start_time = None
 
