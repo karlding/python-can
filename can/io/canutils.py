@@ -6,6 +6,10 @@ It is is compatible with "candump -L" from the canutils program
 (https://github.com/linux-can/can-utils).
 """
 
+from typing import Iterable, Optional, Union
+
+import os
+
 import logging
 
 from can.message import Message
@@ -31,7 +35,7 @@ class CanutilsLogReader(BaseIOHandler):
         ``(0.0) vcan0 001#8d00100100820100``
     """
 
-    def __init__(self, file):
+    def __init__(self, file: Union[str, os.PathLike]):
         """
         :param file: a path-like object or as file-like object to read from
                      If this is a file-like object, is has to opened in text
@@ -39,7 +43,7 @@ class CanutilsLogReader(BaseIOHandler):
         """
         super().__init__(file, mode="r")
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Message]:
         for line in self.file:
 
             # skip empty lines
@@ -96,7 +100,12 @@ class CanutilsLogWriter(BaseIOHandler, Listener):
     It the first message does not have a timestamp, it is set to zero.
     """
 
-    def __init__(self, file, channel="vcan0", append=False):
+    def __init__(
+        self,
+        file: Union[str, os.PathLike],
+        channel: str = "vcan0",
+        append: bool = False,
+    ):
         """
         :param file: a path-like object or as file-like object to write to
                      If this is a file-like object, is has to opened in text
@@ -110,9 +119,9 @@ class CanutilsLogWriter(BaseIOHandler, Listener):
         super().__init__(file, mode=mode)
 
         self.channel = channel
-        self.last_timestamp = None
+        self.last_timestamp: Optional[float] = None
 
-    def on_message_received(self, msg):
+    def on_message_received(self, msg: Message):
         # this is the case for the very first message:
         if self.last_timestamp is None:
             self.last_timestamp = msg.timestamp or 0.0
