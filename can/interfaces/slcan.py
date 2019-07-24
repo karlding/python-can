@@ -9,6 +9,8 @@ Interface for slcan compatible interfaces (win32/linux).
 
 """
 
+from typing import Optional, Tuple
+
 import time
 import logging
 
@@ -54,12 +56,12 @@ class slcanBus(BusABC):
 
     def __init__(
         self,
-        channel,
-        ttyBaudrate=115200,
-        bitrate=None,
-        btr=None,
-        sleep_after_open=_SLEEP_AFTER_SERIAL_OPEN,
-        rtscts=False,
+        channel: str,
+        ttyBaudrate: int = 115200,
+        bitrate: Optional[int] = None,
+        btr: Optional[str] = None,
+        sleep_after_open: float = _SLEEP_AFTER_SERIAL_OPEN,
+        rtscts: bool = False,
         **kwargs
     ):
         """
@@ -85,9 +87,9 @@ class slcanBus(BusABC):
         if not channel:  # if None or empty
             raise TypeError("Must specify a serial port.")
         if "@" in channel:
-            (channel, ttyBaudrate) = channel.split("@")
+            (channel, baudrate) = channel.split("@")
         self.serialPortOrig = serial.serial_for_url(
-            channel, baudrate=ttyBaudrate, rtscts=rtscts
+            channel, baudrate=int(baudrate), rtscts=rtscts
         )
 
         self._buffer = bytearray()
@@ -97,16 +99,16 @@ class slcanBus(BusABC):
         if bitrate is not None and btr is not None:
             raise ValueError("Bitrate and btr mutually exclusive.")
         if bitrate is not None:
-            self.set_bitrate(self, bitrate)
+            self.set_bitrate(bitrate)
         if btr is not None:
-            self.set_bitrate_reg(self, btr)
+            self.set_bitrate_reg(btr)
         self.open()
 
         super().__init__(
             channel, ttyBaudrate=115200, bitrate=None, rtscts=False, **kwargs
         )
 
-    def set_bitrate(self, bitrate):
+    def set_bitrate(self, bitrate: int):
         """
         :raise ValueError: if both *bitrate* is not among the possible values
 
@@ -118,11 +120,13 @@ class slcanBus(BusABC):
             self._write(self._BITRATES[bitrate])
         else:
             raise ValueError(
-                "Invalid bitrate, choose one of " + (", ".join(self._BITRATES)) + "."
+                "Invalid bitrate, choose one of "
+                + (", ".join(self._BITRATES.values()))
+                + "."
             )
         self.open()
 
-    def set_bitrate_reg(self, btr):
+    def set_bitrate_reg(self, btr: str):
         """
         :param str btr:
             BTR register value to set custom can speed
@@ -131,11 +135,11 @@ class slcanBus(BusABC):
         self._write("s" + btr)
         self.open()
 
-    def _write(self, string):
+    def _write(self, string: str):
         self.serialPortOrig.write(string.encode() + self.LINE_TERMINATOR)
         self.serialPortOrig.flush()
 
-    def _read(self, timeout):
+    def _read(self, timeout: Optional[float] = None) -> Optional[str]:
 
         # first read what is already in receive buffer
         while self.serialPortOrig.in_waiting:
@@ -178,7 +182,9 @@ class slcanBus(BusABC):
     def close(self):
         self._write("C")
 
-    def _recv_internal(self, timeout):
+    def _recv_internal(
+        self, timeout: Optional[float] = None
+    ) -> Tuple[Optional[Message], bool]:
 
         canId = None
         remote = False
@@ -220,12 +226,12 @@ class slcanBus(BusABC):
                 timestamp=time.time(),  # Better than nothing...
                 is_remote_frame=remote,
                 dlc=dlc,
-                data=frame,
+                data=bytes(frame),
             )
             return msg, False
         return None, False
 
-    def send(self, msg, timeout=None):
+    def send(self, msg: Message, timeout: Optional[float] = None):
         if timeout != self.serialPortOrig.write_timeout:
             self.serialPortOrig.write_timeout = timeout
         if msg.is_remote_frame:
@@ -245,13 +251,15 @@ class slcanBus(BusABC):
         self.close()
         self.serialPortOrig.close()
 
-    def fileno(self):
+    def fileno(self) -> int:
         if hasattr(self.serialPortOrig, "fileno"):
             return self.serialPortOrig.fileno()
         # Return an invalid file descriptor on Windows
         return -1
 
-    def get_version(self, timeout):
+    def get_version(
+        self, timeout: Optional[float] = None
+    ) -> Tuple[Optional[int], Optional[int]]:
         """Get HW and SW version of the slcan interface.
 
         :type timeout: int or None
@@ -290,7 +298,7 @@ class slcanBus(BusABC):
                 else:
                     return None, None
 
-    def get_serial_number(self, timeout):
+    def get_serial_number(self, timeout: Optional[float] = None) -> Optional[str]:
         """Get serial number of the slcan interface.
 
         :type timeout: int or None
