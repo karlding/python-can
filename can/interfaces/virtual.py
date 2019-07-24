@@ -27,7 +27,10 @@ logger = logging.getLogger(__name__)
 
 
 # Channels are lists of queues, one for each connection
-channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
+if TYPE_CHECKING:
+    channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
+else:
+    channels = {}
 channels_lock = RLock()
 
 
