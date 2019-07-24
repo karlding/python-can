@@ -8,7 +8,9 @@ This module contains the implementation of :class:`can.Message`.
     starting with Python 3.7.
 """
 
-from typing import Optional
+from typing import Optional, Union
+
+from . import typechecking
 
 from copy import deepcopy
 from math import isinf, isnan
@@ -54,9 +56,9 @@ class Message:
         is_extended_id: bool = True,
         is_remote_frame: bool = False,
         is_error_frame: bool = False,
-        channel: Optional[str] = None,
+        channel: Optional[Union[str, int]] = None,
         dlc: Optional[int] = None,
-        data: Optional[bytearray] = None,
+        data: Optional[typechecking.CanData] = None,
         is_fd: bool = False,
         bitrate_switch: bool = False,
         error_state_indicator: bool = False,

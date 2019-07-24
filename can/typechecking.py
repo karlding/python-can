@@ -8,3 +8,8 @@ CanFilter = mypy_extensions.TypedDict(
     "CanFilter", {"can_id": int, "can_mask": int, "extended": bool}
 )
 CanFilters = typing.Iterable[CanFilter]
+
+CanData = typing.Union[bytes, bytearray]
+
+#
+Channel = typing.Union[int, str]
