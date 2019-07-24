@@ -27,10 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 # Channels are lists of queues, one for each connection
-if TYPE_CHECKING:
-    channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
-else:
-    channels = {}
+channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
 channels_lock = RLock()
 
 
@@ -54,7 +51,7 @@ class VirtualBus(BusABC):
 
     def __init__(
         self,
-        channel: typechecking.Channel,
+        channel: typechecking.Channel = "0"
         receive_own_messages: bool = False,
         rx_queue_size: int = 0,
         **kwargs
