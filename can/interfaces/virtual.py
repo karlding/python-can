@@ -8,7 +8,7 @@ Any VirtualBus instances connecting to the same channel
 and reside in the same process will receive the same messages.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from can import typechecking
 
@@ -27,7 +27,10 @@ logger = logging.getLogger(__name__)
 
 
 # Channels are lists of queues, one for each connection
-channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
+if TYPE_CHECKING:
+    channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
+else:
+    channels = {}
 channels_lock = RLock()
 
 
