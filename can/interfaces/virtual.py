@@ -8,6 +8,10 @@ Any VirtualBus instances connecting to the same channel
 and reside in the same process will receive the same messages.
 """
 
+from typing import Dict, List, Optional, Tuple
+
+from can import typechecking
+
 from copy import deepcopy
 import logging
 import time
@@ -16,13 +20,14 @@ from threading import RLock
 from random import randint
 
 from can.bus import BusABC
+from can.message import Message
 from can import CanError
 
 logger = logging.getLogger(__name__)
 
 
 # Channels are lists of queues, one for each connection
-channels = {}
+channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
 channels_lock = RLock()
 
 
@@ -45,7 +50,11 @@ class VirtualBus(BusABC):
     """
 
     def __init__(
-        self, channel=None, receive_own_messages=False, rx_queue_size=0, **kwargs
+        self,
+        channel: typechecking.Channel,
+        receive_own_messages: bool = False,
+        rx_queue_size: int = 0,
+        **kwargs
     ):
         super().__init__(
             channel=channel, receive_own_messages=receive_own_messages, **kwargs
@@ -64,7 +73,7 @@ class VirtualBus(BusABC):
                 channels[self.channel_id] = []
             self.channel = channels[self.channel_id]
 
-            self.queue = queue.Queue(rx_queue_size)
+            self.queue: queue.Queue[Message] = queue.Queue(rx_queue_size)
             self.channel.append(self.queue)
 
     def _check_if_open(self):
@@ -75,7 +84,9 @@ class VirtualBus(BusABC):
         if not self._open:
             raise CanError("Operation on closed bus")
 
-    def _recv_internal(self, timeout):
+    def _recv_internal(
+        self, timeout: Optional[float] = None
+    ) -> Tuple[Optional[Message], bool]:
         self._check_if_open()
         try:
             msg = self.queue.get(block=True, timeout=timeout)
@@ -84,7 +95,7 @@ class VirtualBus(BusABC):
         else:
             return msg, False
 
-    def send(self, msg, timeout=None):
+    def send(self, msg: Message, timeout: Optional[float] = None):
         self._check_if_open()
 
         msg_copy = deepcopy(msg)
