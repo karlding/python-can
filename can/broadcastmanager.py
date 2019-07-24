@@ -7,7 +7,7 @@ The main entry point to these classes should be through
 :meth:`can.BusABC.send_periodic`.
 """
 
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import can.typechecking
 
