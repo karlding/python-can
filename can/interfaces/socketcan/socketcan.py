@@ -7,6 +7,10 @@ along some internal methods.
 At the end of the file the usage of the internal methods is shown.
 """
 
+from typing import Dict, Optional, Sequence, Tuple, Union
+
+from ... import typechecking
+
 import logging
 import ctypes
 import ctypes.util
@@ -38,7 +42,7 @@ from can.interfaces.socketcan.utils import pack_filters, find_available_interfac
 
 
 # Setup BCM struct
-def bcm_header_factory(fields, alignment=8):
+def bcm_header_factory(fields, alignment: int = 8):
     curr_stride = 0
     results = []
     pad_index = 0
@@ -124,7 +128,7 @@ BcmMsgHead = bcm_header_factory(
 CAN_FRAME_HEADER_STRUCT = struct.Struct("=IBB2x")
 
 
-def build_can_frame(msg):
+def build_can_frame(msg: Message) -> bytes:
     """ CAN frame packing/unpacking (see 'struct can_frame' in <linux/can.h>)
     /**
      * struct can_frame - basic CAN frame structure
@@ -168,16 +172,16 @@ def build_can_frame(msg):
 
 
 def build_bcm_header(
-    opcode,
-    flags,
-    count,
-    ival1_seconds,
-    ival1_usec,
-    ival2_seconds,
-    ival2_usec,
-    can_id,
-    nframes,
-):
+    opcode: int,
+    flags: int,
+    count: int,
+    ival1_seconds: int,
+    ival1_usec: int,
+    ival2_seconds: int,
+    ival2_usec: int,
+    can_id: int,
+    nframes: int,
+) -> bytes:
     result = BcmMsgHead(
         opcode=opcode,
         flags=flags,
@@ -192,14 +196,19 @@ def build_bcm_header(
     return ctypes.string_at(ctypes.addressof(result), ctypes.sizeof(result))
 
 
-def build_bcm_tx_delete_header(can_id, flags):
+def build_bcm_tx_delete_header(can_id: int, flags: int) -> bytes:
     opcode = CAN_BCM_TX_DELETE
     return build_bcm_header(opcode, flags, 0, 0, 0, 0, 0, can_id, 1)
 
 
 def build_bcm_transmit_header(
-    can_id, count, initial_period, subsequent_period, msg_flags, nframes=1
-):
+    can_id: int,
+    count: int,
+    initial_period: float,
+    subsequent_period: float,
+    msg_flags: int,
+    nframes: int = 1,
+) -> bytes:
     opcode = CAN_BCM_TX_SETUP
 
     flags = msg_flags | SETTIMER | STARTTIMER
@@ -230,11 +239,11 @@ def build_bcm_transmit_header(
     )
 
 
-def build_bcm_update_header(can_id, msg_flags, nframes=1):
+def build_bcm_update_header(can_id: int, msg_flags: int, nframes: int = 1) -> bytes:
     return build_bcm_header(CAN_BCM_TX_SETUP, msg_flags, 0, 0, 0, 0, 0, can_id, nframes)
 
 
-def dissect_can_frame(frame):
+def dissect_can_frame(frame: bytes) -> Tuple[int, int, int, bytes]:
     can_id, can_dlc, flags = CAN_FRAME_HEADER_STRUCT.unpack_from(frame)
     if len(frame) != CANFD_MTU:
         # Flags not valid in non-FD frames
@@ -242,14 +251,14 @@ def dissect_can_frame(frame):
     return can_id, can_dlc, flags, frame[8 : 8 + can_dlc]
 
 
-def create_bcm_socket(channel):
+def create_bcm_socket(channel: str) -> socket.socket:
     """create a broadcast manager socket and connect to the given interface"""
     s = socket.socket(PF_CAN, socket.SOCK_DGRAM, CAN_BCM)
     s.connect((channel,))
     return s
 
 
-def send_bcm(bcm_socket, data):
+def send_bcm(bcm_socket: socket.socket, data: bytes) -> int:
     """
     Send raw frame to a BCM socket and handle errors.
     """
@@ -275,7 +284,7 @@ def send_bcm(bcm_socket, data):
             raise e
 
 
-def _add_flags_to_can_id(message):
+def _add_flags_to_can_id(message: Message) -> int:
     can_id = message.arbitration_id
     if message.is_extended_id:
         log.debug("sending an extended id type message")
@@ -302,10 +311,16 @@ class CyclicSendTask(
 
     """
 
-    def __init__(self, bcm_socket, messages, period, duration=None):
+    def __init__(
+        self,
+        bcm_socket: socket.socket,
+        messages: Union[Sequence[Message], Message],
+        period: float,
+        duration=None,
+    ):
         """
         :param bcm_socket: An open BCM socket on the desired CAN channel.
-        :param Union[Sequence[can.Message], can.Message] messages:
+        :param messages:
             The messages to be sent periodically.
         :param float period:
             The rate in seconds at which to send the messages.
@@ -321,20 +336,19 @@ class CyclicSendTask(
         self.bcm_socket = bcm_socket
         self._tx_setup(self.messages)
 
-    def _tx_setup(self, messages):
+    def _tx_setup(self, messages: Tuple[Message, ...]):
         # Create a low level packed frame to pass to the kernel
-        header = bytearray()
         body = bytearray()
         self.can_id_with_flags = _add_flags_to_can_id(messages[0])
         self.flags = CAN_FD_FRAME if messages[0].is_fd else 0
 
         if self.duration:
             count = int(self.duration / self.period)
-            ival1 = self.period
-            ival2 = 0
+            ival1: float = self.period
+            ival2: float = 0.0
         else:
             count = 0
-            ival1 = 0
+            ival1 = 0.0
             ival2 = self.period
 
         # First do a TX_READ before creating a new task, and check if we get
@@ -425,7 +439,14 @@ class MultiRateCyclicSendTask(CyclicSendTask):
 
     """
 
-    def __init__(self, channel, messages, count, initial_period, subsequent_period):
+    def __init__(
+        self,
+        channel: socket.socket,
+        messages: Union[Sequence[can.Message], can.Message],
+        count: int,
+        initial_period: float,
+        subsequent_period: float,
+    ):
         super().__init__(channel, messages, subsequent_period)
 
         # Create a low level packed frame to pass to the kernel
@@ -439,14 +460,14 @@ class MultiRateCyclicSendTask(CyclicSendTask):
         )
 
         body = bytearray()
-        for message in messages:
+        for message in self.messages:
             body += build_can_frame(message)
 
         log.info("Sending BCM TX_SETUP command")
         send_bcm(self.bcm_socket, header + body)
 
 
-def create_socket():
+def create_socket() -> socket.socket:
     """Creates a raw CAN socket. The socket will
     be returned unbound to any interface.
     """
@@ -457,11 +478,11 @@ def create_socket():
     return sock
 
 
-def bind_socket(sock, channel="can0"):
+def bind_socket(sock: socket.socket, channel: str = "can0"):
     """
     Binds the given socket to the given interface.
 
-    :param socket.socket sock:
+    :param sock:
         The socket to be bound
     :raises OSError:
         If the specified interface isn't found.
@@ -471,13 +492,13 @@ def bind_socket(sock, channel="can0"):
     log.debug("Bound socket.")
 
 
-def capture_message(sock, get_channel=False):
+def capture_message(sock: socket.socket, get_channel: bool = False) -> Message:
     """
     Captures a message from given socket.
 
-    :param socket.socket sock:
+    :param sock:
         The socket to read a message from.
-    :param bool get_channel:
+    :param get_channel:
         Find out which channel the message comes from.
 
     :return: The received message, or None on failure.
@@ -498,7 +519,7 @@ def capture_message(sock, get_channel=False):
 
     # Fetching the timestamp
     binary_structure = "@LL"
-    res = fcntl.ioctl(sock, SIOCGSTAMP, struct.pack(binary_structure, 0, 0))
+    res = fcntl.ioctl(sock.fileno(), SIOCGSTAMP, struct.pack(binary_structure, 0, 0))
 
     seconds, microseconds = struct.unpack(binary_structure, res)
     timestamp = seconds + microseconds * 1e-6
@@ -547,15 +568,21 @@ class SocketcanBus(BusABC):
     Implements :meth:`can.BusABC._detect_available_configs`.
     """
 
-    def __init__(self, channel="", receive_own_messages=False, fd=False, **kwargs):
+    def __init__(
+        self,
+        channel: str = "",
+        receive_own_messages: bool = False,
+        fd: bool = False,
+        **kwargs,
+    ):
         """
-        :param str channel:
+        :param channel:
             The can interface name with which to create this bus. An example channel
             would be 'vcan0' or 'can0'.
             An empty string '' will receive messages from all channels.
             In that case any sent messages must be explicitly addressed to a
             channel using :attr:`can.Message.channel`.
-        :param bool receive_own_messages:
+        :param receive_own_messages:
             If transmitted messages should also be received by this bus.
         :param bool fd:
             If CAN-FD frames should be supported.
@@ -565,7 +592,7 @@ class SocketcanBus(BusABC):
         self.socket = create_socket()
         self.channel = channel
         self.channel_info = "socketcan channel '%s'" % channel
-        self._bcm_sockets = {}
+        self._bcm_sockets: Dict[str, socket.socket] = {}
         self._is_filtered = False
 
         # set the receive_own_messages parameter
@@ -597,7 +624,9 @@ class SocketcanBus(BusABC):
         log.debug("Closing raw can socket")
         self.socket.close()
 
-    def _recv_internal(self, timeout):
+    def _recv_internal(
+        self, timeout: Optional[float]
+    ) -> Tuple[Optional[Message], bool]:
         # get all sockets that are ready (can be a list with a single value
         # being self.socket or an empty list if self.socket is not ready)
         try:
@@ -619,11 +648,11 @@ class SocketcanBus(BusABC):
             # socket wasn't readable or timeout occurred
             return None, self._is_filtered
 
-    def send(self, msg, timeout=None):
+    def send(self, msg: Message, timeout: Optional[float] = None):
         """Transmit a message to the CAN bus.
 
-        :param can.Message msg: A message object.
-        :param float timeout:
+        :param msg: A message object.
+        :param timeout:
             Wait up to this many seconds for the transmit queue to be ready.
             If not given, the call may fail immediately.
 
@@ -656,7 +685,7 @@ class SocketcanBus(BusABC):
 
         raise can.CanError("Transmit buffer full")
 
-    def _send_once(self, data, channel=None):
+    def _send_once(self, data: bytes, channel: Optional[typechecking.Channel] = None):
         try:
             if self.channel == "" and channel:
                 # Message must be addressed to a specific channel
@@ -702,7 +731,7 @@ class SocketcanBus(BusABC):
         task = CyclicSendTask(bcm_socket, msgs, period, duration)
         return task
 
-    def _get_bcm_socket(self, channel):
+    def _get_bcm_socket(self, channel: str) -> socket.socket:
         if channel not in self._bcm_sockets:
             self._bcm_sockets[channel] = create_bcm_socket(self.channel)
         return self._bcm_sockets[channel]
@@ -721,7 +750,7 @@ class SocketcanBus(BusABC):
         else:
             self._is_filtered = True
 
-    def fileno(self):
+    def fileno(self) -> int:
         return self.socket.fileno()
 
     @staticmethod
