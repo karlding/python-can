@@ -88,8 +88,9 @@ class slcanBus(BusABC):
             raise TypeError("Must specify a serial port.")
         if "@" in channel:
             (channel, baudrate) = channel.split("@")
+            ttyBaudrate = int(baudrate)
         self.serialPortOrig = serial.serial_for_url(
-            channel, baudrate=int(baudrate), rtscts=rtscts
+            channel, baudrate=ttyBaudrate, rtscts=rtscts
         )
 
         self._buffer = bytearray()
