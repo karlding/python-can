@@ -44,7 +44,7 @@ class BusABC(metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        channel: Any,
+        channel: can.typechecking.Channel,
         can_filters: Optional[can.typechecking.CanFilters] = None,
         **kwargs: object
     ):
