@@ -100,6 +100,10 @@ jobs:
           can/player.py
           can/thread_safe_bus.py
           can/util.py
+          can/interfaces/socketcan/constants.py
+          can/interfaces/socketcan/__init__.py
+          can/interfaces/socketcan/socketcan.py
+          can/interfaces/socketcan/utils.py
           can/io/asc.py
     - stage: linter
       name: "Formatting Checks"
