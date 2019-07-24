@@ -7,7 +7,9 @@ The main entry point to these classes should be through
 :meth:`can.BusABC.send_periodic`.
 """
 
-from typing import Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
+
+import can.typechecking
 
 import abc
 import logging
@@ -42,9 +44,9 @@ class CyclicSendTaskABC(CyclicTask):
         self, messages: Union[Sequence[can.Message], can.Message], period: float
     ):
         """
-        :param Union[Sequence[can.Message], can.Message] messages:
+        :param messages:
             The messages to be sent periodically.
-        :param float period: The rate in seconds at which to send the messages.
+        :param period: The rate in seconds at which to send the messages.
         """
         messages = self._check_and_convert_messages(messages)
 
@@ -98,10 +100,10 @@ class LimitedDurationCyclicSendTaskABC(CyclicSendTaskABC):
     ):
         """Message send task with a defined duration and period.
 
-        :param Union[Sequence[can.Message], can.Message] messages:
+        :param messages:
             The messages to be sent periodically.
-        :param float period: The rate in seconds at which to send the messages.
-        :param float duration:
+        :param period: The rate in seconds at which to send the messages.
+        :param duration:
             Approximate duration in seconds to continue sending messages. If
             no duration is provided, the task will continue indefinitely.
         """
@@ -145,7 +147,7 @@ class ModifiableCyclicTaskABC(CyclicSendTaskABC):
         """Update the contents of the periodically sent messages, without
         altering the timing.
 
-        :param Union[Sequence[can.Message], can.Message] messages:
+        :param messages:
             The messages with the new :attr:`can.Message.data`.
 
             Note: The arbitration ID cannot be changed.
@@ -166,7 +168,7 @@ class MultiRateCyclicSendTaskABC(CyclicSendTaskABC):
 
     def __init__(
         self,
-        channel,
+        channel: can.typechecking.Channel,
         messages: Union[Sequence[can.Message], can.Message],
         count: int,
         initial_period: float,
@@ -177,10 +179,10 @@ class MultiRateCyclicSendTaskABC(CyclicSendTaskABC):
         transmit messages at `subsequent_period`.
 
         :param channel: See interface specific documentation.
-        :param Union[Sequence[can.Message], can.Message] messages:
-        :param int count:
-        :param float initial_period:
-        :param float subsequent_period:
+        :param messages:
+        :param count:
+        :param initial_period:
+        :param subsequent_period:
         """
         super().__init__(messages, subsequent_period)
         self._channel = channel
@@ -193,7 +195,7 @@ class ThreadBasedCyclicSendTask(
 
     def __init__(
         self,
-        bus,
+        bus: "can.bus.BusABC",
         lock,
         messages: Union[Sequence[can.Message], can.Message],
         period: float,
