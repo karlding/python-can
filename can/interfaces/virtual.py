@@ -51,7 +51,7 @@ class VirtualBus(BusABC):
 
     def __init__(
         self,
-        channel: typechecking.Channel = "0"
+        channel: typechecking.Channel = "0",
         receive_own_messages: bool = False,
         rx_queue_size: int = 0,
         **kwargs
