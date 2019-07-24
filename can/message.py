@@ -56,7 +56,7 @@ class Message:
         is_extended_id: bool = True,
         is_remote_frame: bool = False,
         is_error_frame: bool = False,
-        channel: Optional[Union[str, int]] = None,
+        channel: Optional[typechecking.Channel] = None,
         dlc: Optional[int] = None,
         data: Optional[typechecking.CanData] = None,
         is_fd: bool = False,

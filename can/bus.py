@@ -4,7 +4,7 @@
 Contains the ABC bus implementation and its documentation.
 """
 
-from typing import Any, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Iterator, List, Optional, Sequence, Tuple, Union
 
 import can.typechecking
 
