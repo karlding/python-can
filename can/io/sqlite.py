@@ -6,7 +6,7 @@ Implements an SQL database writer and reader for storing CAN messages.
 .. note:: The database schema is given in the documentation of the loggers.
 """
 
-from typing import Generator, Iterator, Tuple, Union
+from typing import Iterator, Tuple, Union
 
 import os
 
@@ -59,7 +59,7 @@ class SqliteReader(BaseIOHandler):
 
     @staticmethod
     def _assemble_message(
-        frame_data: Tuple[float, int, int, int, int, int, bytes]
+        frame_data: Tuple[float, int, int, int, int, int, bytearray]
     ) -> Message:
         timestamp, can_id, is_extended, is_remote, is_error, dlc, data = frame_data
         return Message(
