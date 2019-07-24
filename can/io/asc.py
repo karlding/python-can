@@ -8,6 +8,12 @@ Example .asc files:
     - under `test/data/logfile.asc`
 """
 
+from typing import List, Iterator, Optional, Union
+
+from .. import typechecking
+
+import os
+
 from datetime import datetime
 import time
 import logging
@@ -31,7 +37,7 @@ class ASCReader(BaseIOHandler):
     TODO: turn relative timestamps back to absolute form
     """
 
-    def __init__(self, file):
+    def __init__(self, file: Union[str, os.PathLike]):
         """
         :param file: a path-like object or as file-like object to read from
                      If this is a file-like object, is has to opened in text
@@ -40,7 +46,7 @@ class ASCReader(BaseIOHandler):
         super().__init__(file, mode="r")
 
     @staticmethod
-    def _extract_can_id(str_can_id):
+    def _extract_can_id(str_can_id: str):
         if str_can_id[-1:].lower() == "x":
             is_extended = True
             can_id = int(str_can_id[0:-1], 16)
@@ -49,7 +55,7 @@ class ASCReader(BaseIOHandler):
             can_id = int(str_can_id, 16)
         return can_id, is_extended
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Message]:
         for line in self.file:
             # logger.debug("ASCReader: parsing line: '%s'", line.splitlines()[0])
 
@@ -138,7 +144,7 @@ class ASCWriter(BaseIOHandler, Listener):
     FORMAT_DATE = "%a %b %m %I:%M:%S.{} %p %Y"
     FORMAT_EVENT = "{timestamp: 9.6f} {message}\n"
 
-    def __init__(self, file, channel=1):
+    def __init__(self, file, channel: Optional[typechecking.Channel] = 1):
         """
         :param file: a path-like object or as file-like object to write to
                      If this is a file-like object, is has to opened in text
@@ -157,19 +163,19 @@ class ASCWriter(BaseIOHandler, Listener):
 
         # the last part is written with the timestamp of the first message
         self.header_written = False
-        self.last_timestamp = None
-        self.started = None
+        self.last_timestamp = 0.0
+        self.started = 0.0
 
     def stop(self):
         if not self.file.closed:
             self.file.write("End TriggerBlock\n")
         super().stop()
 
-    def log_event(self, message, timestamp=None):
+    def log_event(self, message: str, timestamp: Optional[float] = None):
         """Add a message to the log file.
 
-        :param str message: an arbitrary message
-        :param float timestamp: the absolute timestamp of the event
+        :param message: an arbitrary message
+        :param timestamp: the absolute timestamp of the event
         """
 
         if not message:  # if empty or None
@@ -178,7 +184,7 @@ class ASCWriter(BaseIOHandler, Listener):
 
         # this is the case for the very first message:
         if not self.header_written:
-            self.last_timestamp = timestamp or 0.0
+            self.last_timestamp = timestamp if timestamp else 0.0
             self.started = self.last_timestamp
             mlsec = repr(self.last_timestamp).split(".")[1][:3]
             formatted_date = time.strftime(
@@ -199,7 +205,7 @@ class ASCWriter(BaseIOHandler, Listener):
         line = self.FORMAT_EVENT.format(timestamp=timestamp, message=message)
         self.file.write(line)
 
-    def on_message_received(self, msg):
+    def on_message_received(self, msg: Message):
 
         if msg.is_error_frame:
             self.log_event("{}  ErrorFrame".format(self.channel), msg.timestamp)
@@ -207,7 +213,7 @@ class ASCWriter(BaseIOHandler, Listener):
 
         if msg.is_remote_frame:
             dtype = "r"
-            data = []
+            data: List[str] = []
         else:
             dtype = "d {}".format(msg.dlc)
             data = ["{:02X}".format(byte) for byte in msg.data]
