@@ -28,7 +28,7 @@ class BaseIOHandler(metaclass=ABCMeta):
         :param str mode: the mode that should be used to open the file, see
                          :func:`open`, ignored if *file* is `None`
         """
-        if isinstance(file, (str, os.Pathlike)):
+        if isinstance(file, (str, os.PathLike)):
             # file is some path-like object
             self.file = open(file, mode)
         else:
