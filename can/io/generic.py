@@ -21,7 +21,7 @@ class BaseIOHandler(metaclass=ABCMeta):
         was opened
     """
 
-    def __init__(self, file : Union[str, os.Pathlike, IO], mode : str ="rt"):
+    def __init__(self, file: Union[str, os.Pathlike, IO], mode: str = "rt"):
         """
         :param file: a path-like object to open a file, a file-like object
                      to be used as a file or `None` to not use a file at all
