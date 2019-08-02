@@ -6,7 +6,7 @@ Utilities and configuration file parsing.
 
 from typing import Dict, Optional, Union
 
-import typechecking
+from . import typechecking
 
 import json
 import os
@@ -35,7 +35,9 @@ elif platform.system() == "Windows" or platform.python_implementation() == "Iron
     CONFIG_FILES.extend(["can.ini", os.path.join(os.getenv("APPDATA", ""), "can.ini")])
 
 
-def load_file_config(path=None, section: str = "default"):
+def load_file_config(
+    path: Optional[typechecking.Openable] = None, section: str = "default"
+) -> Dict[str, str]:
     """
     Loads configuration from file with following content::
 
@@ -100,7 +102,11 @@ def load_environment_config(context: Optional[str] = None) -> Dict[str, str]:
     return config
 
 
-def load_config(path=None, config=None, context=None):
+def load_config(
+    path: Optional[typechecking.Openable] = None,
+    config=None,
+    context: Optional[str] = None,
+) -> typechecking.BusConfig:
     """
     Returns a dict with configuration details which is loaded from (in this order):
 
@@ -256,7 +262,7 @@ def dlc2len(dlc: int) -> int:
     return CAN_FD_DLC[dlc] if dlc <= 15 else 64
 
 
-def channel2int(channel: Union[typechecking.Channel]) -> Optional[int]:
+def channel2int(channel: Optional[Union[typechecking.Channel]]) -> Optional[int]:
     """Try to convert the channel to an integer.
 
     :param channel:
