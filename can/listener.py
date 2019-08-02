@@ -112,9 +112,8 @@ class BufferedReader(Listener):
         returns None (whichever is shorter). This method does not block after
         :meth:`can.BufferedReader.stop` has been called.
 
-        :param float timeout: The number of seconds to wait for a new message.
-        :rytpe: can.Message or None
-        :return: the message if there is one, or None if there is not.
+        :param timeout: The number of seconds to wait for a new message.
+        :return: the Message if there is one, or None if there is not.
         """
         try:
             return self.buffer.get(block=not self.is_stopped, timeout=timeout)
