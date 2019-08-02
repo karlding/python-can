@@ -45,7 +45,7 @@ class Listener(metaclass=ABCMeta):
         """
 
     def __call__(self, msg: Message):
-        return self.on_message_received(msg)
+        self.on_message_received(msg)
 
     def on_error(self, exc: Exception):
         """This method is called to handle any exception in the receive thread.
@@ -105,7 +105,7 @@ class BufferedReader(Listener):
         else:
             self.buffer.put(msg)
 
-    def get_message(self, timeout=0.5) -> Optional[Message]:
+    def get_message(self, timeout: float = 0.5) -> Optional[Message]:
         """
         Attempts to retrieve the latest message received by the instance. If no message is
         available it blocks for given timeout or until a message is received, or else
@@ -138,9 +138,9 @@ class AsyncBufferedReader(Listener):
             print(msg)
     """
 
-    def __init__(self, loop=None):
+    def __init__(self, loop: Optional[asyncio.events.AbstractEventLoop] = None):
         # set to "infinite" size
-        self.buffer = asyncio.Queue(loop=loop)
+        self.buffer: asyncio.Queue[Message] = asyncio.Queue(loop=loop)
 
     def on_message_received(self, msg: Message):
         """Append a message to the buffer.
