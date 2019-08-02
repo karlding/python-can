@@ -57,7 +57,10 @@ class CSVWriter(BaseIOHandler, Listener):
 
         # Write a header row
         if not append:
-            self.file.write("timestamp,arbitration_id,extended,remote,error,dlc,data\n")
+            if self.file:
+                self.file.write(
+                    "timestamp,arbitration_id,extended,remote,error,dlc,data\n"
+                )
 
     def on_message_received(self, msg: Message):
         row = ",".join(
@@ -71,8 +74,9 @@ class CSVWriter(BaseIOHandler, Listener):
                 b64encode(msg.data).decode("utf8"),
             ]
         )
-        self.file.write(row)
-        self.file.write("\n")
+        if self.file:
+            self.file.write(row)
+            self.file.write("\n")
 
 
 class CSVReader(BaseIOHandler):
@@ -93,27 +97,28 @@ class CSVReader(BaseIOHandler):
         super().__init__(file, mode="r")
 
     def __iter__(self) -> Iterable[Message]:
-        # skip the header line
-        try:
-            next(self.file)
-        except StopIteration:
-            # don't crash on a file with only a header
-            return
+        if self.file:
+            # skip the header line
+            try:
+                next(self.file)
+            except StopIteration:
+                # don't crash on a file with only a header
+                return
 
-        for line in self.file:
+            for line in self.file:
 
-            timestamp, arbitration_id, extended, remote, error, dlc, data = line.split(
-                ","
-            )
+                timestamp, arbitration_id, extended, remote, error, dlc, data = line.split(
+                    ","
+                )
 
-            yield Message(
-                timestamp=float(timestamp),
-                is_remote_frame=(remote == "1"),
-                is_extended_id=(extended == "1"),
-                is_error_frame=(error == "1"),
-                arbitration_id=int(arbitration_id, base=16),
-                dlc=int(dlc),
-                data=b64decode(data),
-            )
+                yield Message(
+                    timestamp=float(timestamp),
+                    is_remote_frame=(remote == "1"),
+                    is_extended_id=(extended == "1"),
+                    is_error_frame=(error == "1"),
+                    arbitration_id=int(arbitration_id, base=16),
+                    dlc=int(dlc),
+                    data=b64decode(data),
+                )
 
-        self.stop()
+            self.stop()

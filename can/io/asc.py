@@ -56,79 +56,82 @@ class ASCReader(BaseIOHandler):
         return can_id, is_extended
 
     def __iter__(self) -> Iterator[Message]:
-        for line in self.file:
-            # logger.debug("ASCReader: parsing line: '%s'", line.splitlines()[0])
+        if self.file:
+            for line in self.file:
+                # logger.debug("ASCReader: parsing line: '%s'", line.splitlines()[0])
 
-            temp = line.strip()
-            if not temp or not temp[0].isdigit():
-                continue
+                temp = line.strip()
+                if not temp or not temp[0].isdigit():
+                    continue
 
-            try:
-                timestamp, channel, dummy = temp.split(
-                    None, 2
-                )  # , frameType, dlc, frameData
-            except ValueError:
-                # we parsed an empty comment
-                continue
-
-            timestamp = float(timestamp)
-            try:
-                # See ASCWriter
-                channel = int(channel) - 1
-            except ValueError:
-                pass
-
-            if dummy.strip()[0:10].lower() == "errorframe":
-                msg = Message(timestamp=timestamp, is_error_frame=True, channel=channel)
-                yield msg
-
-            elif (
-                not isinstance(channel, int)
-                or dummy.strip()[0:10].lower() == "statistic:"
-            ):
-                pass
-
-            elif dummy[-1:].lower() == "r":
-                can_id_str, _ = dummy.split(None, 1)
-                can_id_num, is_extended_id = self._extract_can_id(can_id_str)
-                msg = Message(
-                    timestamp=timestamp,
-                    arbitration_id=can_id_num & CAN_ID_MASK,
-                    is_extended_id=is_extended_id,
-                    is_remote_frame=True,
-                    channel=channel,
-                )
-                yield msg
-
-            else:
                 try:
-                    # this only works if dlc > 0 and thus data is availabe
-                    can_id_str, _, _, dlc, data = dummy.split(None, 4)
+                    timestamp, channel, dummy = temp.split(
+                        None, 2
+                    )  # , frameType, dlc, frameData
                 except ValueError:
-                    # but if not, we only want to get the stuff up to the dlc
-                    can_id_str, _, _, dlc = dummy.split(None, 3)
-                    # and we set data to an empty sequence manually
-                    data = ""
+                    # we parsed an empty comment
+                    continue
 
-                dlc = int(dlc)
-                frame = bytearray()
-                data = data.split()
-                for byte in data[0:dlc]:
-                    frame.append(int(byte, 16))
+                timestamp = float(timestamp)
+                try:
+                    # See ASCWriter
+                    channel = int(channel) - 1
+                except ValueError:
+                    pass
 
-                can_id_num, is_extended_id = self._extract_can_id(can_id_str)
+                if dummy.strip()[0:10].lower() == "errorframe":
+                    msg = Message(
+                        timestamp=timestamp, is_error_frame=True, channel=channel
+                    )
+                    yield msg
 
-                yield Message(
-                    timestamp=timestamp,
-                    arbitration_id=can_id_num & CAN_ID_MASK,
-                    is_extended_id=is_extended_id,
-                    is_remote_frame=False,
-                    dlc=dlc,
-                    data=frame,
-                    channel=channel,
-                )
+                elif (
+                    not isinstance(channel, int)
+                    or dummy.strip()[0:10].lower() == "statistic:"
+                ):
+                    pass
 
-        self.stop()
+                elif dummy[-1:].lower() == "r":
+                    can_id_str, _ = dummy.split(None, 1)
+                    can_id_num, is_extended_id = self._extract_can_id(can_id_str)
+                    msg = Message(
+                        timestamp=timestamp,
+                        arbitration_id=can_id_num & CAN_ID_MASK,
+                        is_extended_id=is_extended_id,
+                        is_remote_frame=True,
+                        channel=channel,
+                    )
+                    yield msg
+
+                else:
+                    try:
+                        # this only works if dlc > 0 and thus data is availabe
+                        can_id_str, _, _, dlc, data = dummy.split(None, 4)
+                    except ValueError:
+                        # but if not, we only want to get the stuff up to the dlc
+                        can_id_str, _, _, dlc = dummy.split(None, 3)
+                        # and we set data to an empty sequence manually
+                        data = ""
+
+                    dlc = int(dlc)
+                    frame = bytearray()
+                    data = data.split()
+                    for byte in data[0:dlc]:
+                        frame.append(int(byte, 16))
+
+                    can_id_num, is_extended_id = self._extract_can_id(can_id_str)
+
+                    yield Message(
+                        timestamp=timestamp,
+                        arbitration_id=can_id_num & CAN_ID_MASK,
+                        is_extended_id=is_extended_id,
+                        is_remote_frame=False,
+                        dlc=dlc,
+                        data=frame,
+                        channel=channel,
+                    )
+
+            self.stop()
 
 
 class ASCWriter(BaseIOHandler, Listener):
@@ -144,7 +147,9 @@ class ASCWriter(BaseIOHandler, Listener):
     FORMAT_DATE = "%a %b %m %I:%M:%S.{} %p %Y"
     FORMAT_EVENT = "{timestamp: 9.6f} {message}\n"
 
-    def __init__(self, file, channel: Optional[typechecking.Channel] = 1):
+    def __init__(
+        self, file: Union[str, os.PathLike], channel: Optional[typechecking.Channel] = 1
+    ):
         """
         :param file: a path-like object or as file-like object to write to
                      If this is a file-like object, is has to opened in text
@@ -155,11 +160,12 @@ class ASCWriter(BaseIOHandler, Listener):
         super().__init__(file, mode="w")
         self.channel = channel
 
-        # write start of file header
-        now = datetime.now().strftime("%a %b %m %I:%M:%S.%f %p %Y")
-        self.file.write("date %s\n" % now)
-        self.file.write("base hex  timestamps absolute\n")
-        self.file.write("internal events logged\n")
+        if self.file:
+            # write start of file header
+            now = datetime.now().strftime("%a %b %m %I:%M:%S.%f %p %Y")
+            self.file.write("date %s\n" % now)
+            self.file.write("base hex  timestamps absolute\n")
+            self.file.write("internal events logged\n")
 
         # the last part is written with the timestamp of the first message
         self.header_written = False
@@ -178,32 +184,35 @@ class ASCWriter(BaseIOHandler, Listener):
         :param timestamp: the absolute timestamp of the event
         """
 
-        if not message:  # if empty or None
-            logger.debug("ASCWriter: ignoring empty message")
-            return
+        if self.file:
+            if not message:  # if empty or None
+                logger.debug("ASCWriter: ignoring empty message")
+                return
 
-        # this is the case for the very first message:
-        if not self.header_written:
-            self.last_timestamp = timestamp if timestamp else 0.0
-            self.started = self.last_timestamp
-            mlsec = repr(self.last_timestamp).split(".")[1][:3]
-            formatted_date = time.strftime(
-                self.FORMAT_DATE.format(mlsec), time.localtime(self.last_timestamp)
-            )
-            self.file.write("Begin Triggerblock %s\n" % formatted_date)
-            self.header_written = True
-            self.log_event("Start of measurement")  # caution: this is a recursive call!
+            # this is the case for the very first message:
+            if not self.header_written:
+                self.last_timestamp = timestamp if timestamp else 0.0
+                self.started = self.last_timestamp
+                mlsec = repr(self.last_timestamp).split(".")[1][:3]
+                formatted_date = time.strftime(
+                    self.FORMAT_DATE.format(mlsec), time.localtime(self.last_timestamp)
+                )
+                self.file.write("Begin Triggerblock %s\n" % formatted_date)
+                self.header_written = True
+                self.log_event(
+                    "Start of measurement"
+                )  # caution: this is a recursive call!
 
-        # Use last known timestamp if unknown
-        if timestamp is None:
-            timestamp = self.last_timestamp
+            # Use last known timestamp if unknown
+            if timestamp is None:
+                timestamp = self.last_timestamp
 
-        # turn into relative timestamps if necessary
-        if timestamp >= self.started:
-            timestamp -= self.started
+            # turn into relative timestamps if necessary
+            if timestamp >= self.started:
+                timestamp -= self.started
 
-        line = self.FORMAT_EVENT.format(timestamp=timestamp, message=message)
-        self.file.write(line)
+            line = self.FORMAT_EVENT.format(timestamp=timestamp, message=message)
+            self.file.write(line)
 
     def on_message_received(self, msg: Message):
 

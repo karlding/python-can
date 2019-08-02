@@ -44,51 +44,52 @@ class CanutilsLogReader(BaseIOHandler):
         super().__init__(file, mode="r")
 
     def __iter__(self) -> Iterable[Message]:
-        for line in self.file:
+        if self.file:
+            for line in self.file:
 
-            # skip empty lines
-            temp = line.strip()
-            if not temp:
-                continue
+                # skip empty lines
+                temp = line.strip()
+                if not temp:
+                    continue
 
-            timestamp, channel, frame = temp.split()
-            timestamp = float(timestamp[1:-1])
-            canId, data = frame.split("#")
-            if channel.isdigit():
-                channel = int(channel)
+                timestamp, channel, frame = temp.split()
+                timestamp = float(timestamp[1:-1])
+                canId, data = frame.split("#")
+                if channel.isdigit():
+                    channel = int(channel)
 
-            isExtended = len(canId) > 3
-            canId = int(canId, 16)
+                isExtended = len(canId) > 3
+                canId = int(canId, 16)
 
-            if data and data[0].lower() == "r":
-                isRemoteFrame = True
-                if len(data) > 1:
-                    dlc = int(data[1:])
+                if data and data[0].lower() == "r":
+                    isRemoteFrame = True
+                    if len(data) > 1:
+                        dlc = int(data[1:])
+                    else:
+                        dlc = 0
                 else:
-                    dlc = 0
-            else:
-                isRemoteFrame = False
+                    isRemoteFrame = False
 
-                dlc = len(data) // 2
-                dataBin = bytearray()
-                for i in range(0, len(data), 2):
-                    dataBin.append(int(data[i : (i + 2)], 16))
+                    dlc = len(data) // 2
+                    dataBin = bytearray()
+                    for i in range(0, len(data), 2):
+                        dataBin.append(int(data[i : (i + 2)], 16))
 
-            if canId & CAN_ERR_FLAG and canId & CAN_ERR_BUSERROR:
-                msg = Message(timestamp=timestamp, is_error_frame=True)
-            else:
-                msg = Message(
-                    timestamp=timestamp,
-                    arbitration_id=canId & 0x1FFFFFFF,
-                    is_extended_id=isExtended,
-                    is_remote_frame=isRemoteFrame,
-                    dlc=dlc,
-                    data=dataBin,
-                    channel=channel,
-                )
-            yield msg
+                if canId & CAN_ERR_FLAG and canId & CAN_ERR_BUSERROR:
+                    msg = Message(timestamp=timestamp, is_error_frame=True)
+                else:
+                    msg = Message(
+                        timestamp=timestamp,
+                        arbitration_id=canId & 0x1FFFFFFF,
+                        is_extended_id=isExtended,
+                        is_remote_frame=isRemoteFrame,
+                        dlc=dlc,
+                        data=dataBin,
+                        channel=channel,
+                    )
+                yield msg
 
-        self.stop()
+            self.stop()
 
 
 class CanutilsLogWriter(BaseIOHandler, Listener):
@@ -134,31 +135,32 @@ class CanutilsLogWriter(BaseIOHandler, Listener):
 
         channel = msg.channel if msg.channel is not None else self.channel
 
-        if msg.is_error_frame:
-            self.file.write(
-                "(%f) %s %08X#0000000000000000\n"
-                % (timestamp, channel, CAN_ERR_FLAG | CAN_ERR_BUSERROR)
-            )
-
-        elif msg.is_remote_frame:
-            if msg.is_extended_id:
+        if self.file:
+            if msg.is_error_frame:
                 self.file.write(
-                    "(%f) %s %08X#R\n" % (timestamp, channel, msg.arbitration_id)
-                )
-            else:
-                self.file.write(
-                    "(%f) %s %03X#R\n" % (timestamp, channel, msg.arbitration_id)
+                    "(%f) %s %08X#0000000000000000\n"
+                    % (timestamp, channel, CAN_ERR_FLAG | CAN_ERR_BUSERROR)
                 )
 
-        else:
-            data = ["{:02X}".format(byte) for byte in msg.data]
-            if msg.is_extended_id:
-                self.file.write(
-                    "(%f) %s %08X#%s\n"
-                    % (timestamp, channel, msg.arbitration_id, "".join(data))
-                )
+            elif msg.is_remote_frame:
+                if msg.is_extended_id:
+                    self.file.write(
+                        "(%f) %s %08X#R\n" % (timestamp, channel, msg.arbitration_id)
+                    )
+                else:
+                    self.file.write(
+                        "(%f) %s %03X#R\n" % (timestamp, channel, msg.arbitration_id)
+                    )
+
             else:
-                self.file.write(
-                    "(%f) %s %03X#%s\n"
-                    % (timestamp, channel, msg.arbitration_id, "".join(data))
-                )
+                data = ["{:02X}".format(byte) for byte in msg.data]
+                if msg.is_extended_id:
+                    self.file.write(
+                        "(%f) %s %08X#%s\n"
+                        % (timestamp, channel, msg.arbitration_id, "".join(data))
+                    )
+                else:
+                    self.file.write(
+                        "(%f) %s %03X#%s\n"
+                        % (timestamp, channel, msg.arbitration_id, "".join(data))
+                    )

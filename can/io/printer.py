@@ -44,7 +44,7 @@ class Printer(BaseIOHandler, Listener):
         super().__init__(file, mode="w")
 
     def on_message_received(self, msg: can.message.Message):
-        if self.write_to_file:
+        if self.write_to_file and self.file:
             self.file.write(str(msg) + "\n")
         else:
             print(msg)

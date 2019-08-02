@@ -4,7 +4,8 @@
 Contains a generic class for file IO.
 """
 
-from typing import IO, Union
+from typing import Any, IO, Optional, Union
+from can import typechecking
 
 import os
 
@@ -21,7 +22,9 @@ class BaseIOHandler(metaclass=ABCMeta):
         was opened
     """
 
-    def __init__(self, file: Union[str, os.PathLike, IO], mode: str = "rt"):
+    def __init__(
+        self, file: Optional[Union[typechecking.Openable, IO]], mode: str = "rt"
+    ):
         """
         :param file: a path-like object to open a file, a file-like object
                      to be used as a file or `None` to not use a file at all
@@ -30,7 +33,7 @@ class BaseIOHandler(metaclass=ABCMeta):
         """
         if isinstance(file, (str, os.PathLike)):
             # file is some path-like object
-            self.file = open(file, mode)
+            self.file: Optional[IO[Any]] = open(file, mode)
         else:
             # file is None or some file-like object
             self.file = file
