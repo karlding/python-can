@@ -147,9 +147,7 @@ class ASCWriter(BaseIOHandler, Listener):
     FORMAT_DATE = "%a %b %m %I:%M:%S.{} %p %Y"
     FORMAT_EVENT = "{timestamp: 9.6f} {message}\n"
 
-    def __init__(
-        self, file: Union[str, os.PathLike], channel: Optional[typechecking.Channel] = 1
-    ):
+    def __init__(self, file: Union[str, os.PathLike], channel: Optional[int] = 1):
         """
         :param file: a path-like object or as file-like object to write to
                      If this is a file-like object, is has to opened in text
