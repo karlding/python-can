@@ -223,14 +223,14 @@ def load_config(
     return config
 
 
-def set_logging_level(level_name=None):
+def set_logging_level(level_name: Optional[str] = None):
     """Set the logging level for the "can" logger.
     Expects one of: 'critical', 'error', 'warning', 'info', 'debug', 'subdebug'
     """
     can_logger = logging.getLogger("can")
 
     try:
-        can_logger.setLevel(getattr(logging, level_name.upper()))
+        can_logger.setLevel(getattr(logging, level_name.upper()))  # type: ignore
     except AttributeError:
         can_logger.setLevel(logging.DEBUG)
     log.debug("Logging set to {}".format(level_name))
