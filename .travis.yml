@@ -89,6 +89,7 @@ jobs:
           --python-version=3.7
           --ignore-missing-imports
           --no-implicit-optional
+          --warn-unused-ignores
           can/bit_timing.py
           can/broadcastmanager.py
           can/bus.py
