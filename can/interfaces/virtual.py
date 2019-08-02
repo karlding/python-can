@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Channels are lists of queues, one for each connection
 if TYPE_CHECKING:
-    channels: Dict[typechecking.Channel, List[queue.Queue[Message]]] = {}
+    channels: Dict[typechecking.Channel, List["queue.Queue[Message]"]] = {}
 else:
     channels = {}
 channels_lock = RLock()
@@ -76,7 +76,7 @@ class VirtualBus(BusABC):
                 channels[self.channel_id] = []
             self.channel = channels[self.channel_id]
 
-            self.queue: queue.Queue[Message] = queue.Queue(rx_queue_size)
+            self.queue: "queue.Queue[Message]" = queue.Queue(rx_queue_size)
             self.channel.append(self.queue)
 
     def _check_if_open(self):

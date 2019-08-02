@@ -139,7 +139,7 @@ class AsyncBufferedReader(Listener):
 
     def __init__(self, loop: Optional[asyncio.events.AbstractEventLoop] = None):
         # set to "infinite" size
-        self.buffer: asyncio.Queue[Message] = asyncio.Queue(loop=loop)
+        self.buffer: "asyncio.Queue[Message]" = asyncio.Queue(loop=loop)
 
     def on_message_received(self, msg: Message):
         """Append a message to the buffer.
