@@ -199,7 +199,7 @@ class ThreadBasedCyclicSendTask(
 
     def __init__(
         self,
-        bus: can.bus.BusABC,
+        bus: "can.bus.BusABC",
         lock: threading.Lock,
         messages: Union[Sequence[can.message.Message], can.message.Message],
         period: float,
