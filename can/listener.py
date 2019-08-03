@@ -7,6 +7,7 @@ This module contains the implementation of `can.Listener` and some readers.
 from typing import Optional
 
 from .message import Message
+from .bus import BusABC
 
 from abc import ABCMeta, abstractmethod
 
@@ -65,10 +66,11 @@ class Listener(metaclass=ABCMeta):
 class RedirectReader(Listener):
     """
     A RedirectReader sends all received messages to another Bus.
-
     """
 
-    def __init__(self, bus):
+    def __init__(self, bus: BusABC):
+        """
+        """
         self.bus = bus
 
     def on_message_received(self, msg: Message):

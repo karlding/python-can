@@ -68,14 +68,14 @@ class BusABC(metaclass=ABCMeta):
     def __str__(self) -> str:
         return self.channel_info
 
-    def recv(self, timeout: Optional[float] = None) -> Optional[can.Message]:
+    def recv(self, timeout: Optional[float] = None) -> Optional[can.message.Message]:
         """Block waiting for a message from the Bus.
 
         :param timeout:
             seconds to wait for a message or None to wait indefinitely
 
         :return:
-            None on timeout or a :class:`can.Message` object.
+            None on timeout or a :class:`can.message.Message` object.
         :raises can.CanError:
             if an error occurred while reading
         """
@@ -109,7 +109,7 @@ class BusABC(metaclass=ABCMeta):
 
     def _recv_internal(
         self, timeout: Optional[float]
-    ) -> Tuple[Optional[can.Message], bool]:
+    ) -> Tuple[Optional[can.message.Message], bool]:
         """
         Read a message from the bus and tell whether it was filtered.
         This methods may be called by :meth:`~can.BusABC.recv`
@@ -152,12 +152,12 @@ class BusABC(metaclass=ABCMeta):
         raise NotImplementedError("Trying to read from a write only bus?")
 
     @abstractmethod
-    def send(self, msg: can.Message, timeout: Optional[float] = None):
+    def send(self, msg: can.message.Message, timeout: Optional[float] = None):
         """Transmit a message to the CAN bus.
 
         Override this method to enable the transmit path.
 
-        :param can.Message msg: A message object.
+        :param can.message.Message msg: A message object.
 
         :param timeout:
             If > 0, wait up to this many seconds for message to be ACK'ed or
@@ -173,7 +173,7 @@ class BusABC(metaclass=ABCMeta):
 
     def send_periodic(
         self,
-        msgs: Union[Sequence[can.Message], can.Message],
+        msgs: Union[Sequence[can.message.Message], can.message.Message],
         period: float,
         duration: Optional[float] = None,
         store_task: bool = True,
@@ -217,7 +217,7 @@ class BusABC(metaclass=ABCMeta):
             are associated with the Bus instance.
         """
         if not isinstance(msgs, (list, tuple)):
-            if isinstance(msgs, can.Message):
+            if isinstance(msgs, can.message.Message):
                 msgs = [msgs]
             else:
                 raise ValueError("Must be either a list, tuple, or a Message")
@@ -244,7 +244,7 @@ class BusABC(metaclass=ABCMeta):
 
     def _send_periodic_internal(
         self,
-        msgs: Union[Sequence[can.Message], can.Message],
+        msgs: Union[Sequence[can.message.Message], can.message.Message],
         period: float,
         duration: Optional[float] = None,
     ) -> can.broadcastmanager.CyclicSendTaskABC:
@@ -291,7 +291,7 @@ class BusABC(metaclass=ABCMeta):
         if remove_tasks:
             self._periodic_tasks = []
 
-    def __iter__(self) -> Iterator[can.Message]:
+    def __iter__(self) -> Iterator[can.message.Message]:
         """Allow iteration on messages as they are received.
 
             >>> for msg in bus:
@@ -299,7 +299,7 @@ class BusABC(metaclass=ABCMeta):
 
 
         :yields:
-            :class:`can.Message` msg objects.
+            :class:`can.message.Message` msg objects.
         """
         while True:
             msg = self.recv(timeout=1.0)
@@ -352,7 +352,7 @@ class BusABC(metaclass=ABCMeta):
             See :meth:`~can.BusABC.set_filters` for details.
         """
 
-    def _matches_filters(self, msg: can.Message) -> bool:
+    def _matches_filters(self, msg: can.message.Message) -> bool:
         """Checks whether the given message matches at least one of the
         current filters. See :meth:`~can.BusABC.set_filters` for details
         on how the filters work.
