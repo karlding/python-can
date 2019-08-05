@@ -65,8 +65,10 @@ class Notifier:
             CAN bus instance.
         """
         if (
-            self._loop is not None and hasattr(bus, "fileno") and bus.fileno() >= 0
-        ):  # type: ignore
+            self._loop is not None
+            and hasattr(bus, "fileno")
+            and bus.fileno() >= 0  # type: ignore
+        ):
             # Use file descriptor to watch for messages
             reader = bus.fileno()  # type: ignore
             self._loop.add_reader(reader, self._on_message_available, bus)
