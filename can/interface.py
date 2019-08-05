@@ -7,6 +7,7 @@ CyclicSendTasks.
 """
 
 from typing import Iterable, List, Optional, Union
+from . import typechecking
 
 import importlib
 import logging
@@ -66,7 +67,7 @@ class Bus(BusABC):  # pylint disable=abstract-method
     """
 
     @staticmethod
-    def __new__(cls, channel=None, *args, **kwargs):
+    def __new__(cls, channel: Optional[typechecking.Channel] = None, *args, **kwargs):
         """
         Takes the same arguments as :class:`can.BusABC.__init__`.
         Some might have a special meaning, see below.
@@ -96,26 +97,26 @@ class Bus(BusABC):  # pylint disable=abstract-method
             del kwargs["context"]
         else:
             context = None
-        kwargs = load_config(config=kwargs, context=context)
+        bus_config = load_config(config=kwargs, context=context)
 
         # resolve the bus class to use for that interface
-        cls = _get_class_for_interface(kwargs["interface"])
+        cls = _get_class_for_interface(bus_config["interface"])
 
         # remove the 'interface' key so it doesn't get passed to the backend
-        del kwargs["interface"]
+        del bus_config["interface"]
 
         # make sure the bus can handle this config format
-        if "channel" not in kwargs:
+        if "channel" not in bus_config:
             raise ValueError("'channel' argument missing")
         else:
-            channel = kwargs["channel"]
-            del kwargs["channel"]
+            channel = bus_config["channel"]
+            del bus_config["channel"]
 
         if channel is None:
             # Use the default channel for the backend
-            return cls(*args, **kwargs)
+            return cls(*args, **bus_config)
         else:
-            return cls(channel, *args, **kwargs)
+            return cls(channel, *args, **bus_config)
 
 
 def detect_available_configs(
@@ -135,7 +136,6 @@ def detect_available_configs(
         - the name of an interface to be searched in as a string,
         - an iterable of interface names to search in, or
         - `None` to search in all known interfaces.
-    :rtype: list[dict]
     :return: an iterable of dicts, each suitable for usage in
              the constructor of :class:`can.BusABC`.
     """
