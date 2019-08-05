@@ -10,8 +10,6 @@ Example .asc files:
 
 from typing import List, Iterator, Optional, Union
 
-from .. import typechecking
-
 import os
 
 from datetime import datetime
