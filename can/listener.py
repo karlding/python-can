@@ -4,10 +4,11 @@
 This module contains the implementation of `can.Listener` and some readers.
 """
 
-from typing import AsyncIterator, Awaitable, Optional
+from typing import AsyncIterator, Awaitable, Optional, TYPE_CHECKING
 
 from can.message import Message
-from can.bus import BusABC
+if TYPE_CHECKING:
+    from can.bus import BusABC
 
 from abc import ABCMeta, abstractmethod
 
