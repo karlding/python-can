@@ -6,8 +6,8 @@ This module contains the implementation of `can.Listener` and some readers.
 
 from typing import AsyncIterator, Awaitable, Optional
 
-from .message import Message
-from .bus import BusABC
+from can.message import Message
+from can.bus import BusABC
 
 from abc import ABCMeta, abstractmethod
 

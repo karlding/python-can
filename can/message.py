@@ -10,7 +10,7 @@ This module contains the implementation of :class:`can.Message`.
 
 from typing import Optional, Union
 
-from . import typechecking
+from can import typechecking
 
 from copy import deepcopy
 from math import isinf, isnan

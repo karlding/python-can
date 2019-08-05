@@ -7,14 +7,14 @@ CyclicSendTasks.
 """
 
 from typing import Iterable, List, Optional, Union
-from . import typechecking
+from can import typechecking
 
 import importlib
 import logging
 
-from .bus import BusABC
-from .util import load_config
-from .interfaces import BACKENDS
+from can.bus import BusABC
+from can.util import load_config
+from can.interfaces import BACKENDS
 
 log = logging.getLogger("can.interface")
 log_autodetect = log.getChild("detect_available_configs")

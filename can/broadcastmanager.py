@@ -9,11 +9,11 @@ The main entry point to these classes should be through
 
 from typing import Optional, Sequence, Tuple, Union, TYPE_CHECKING
 
-from . import typechecking
-from .message import Message
+from can import typechecking
+from can.message import Message
 
 if TYPE_CHECKING:
-    from .bus import BusABC
+    from can.bus import BusABC
 
 import abc
 import logging

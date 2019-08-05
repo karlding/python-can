@@ -6,7 +6,7 @@ Utilities and configuration file parsing.
 
 from typing import Dict, Optional, Union
 
-from . import typechecking
+from can import typechecking
 
 import json
 import os

@@ -6,9 +6,9 @@ Contains the ABC bus implementation and its documentation.
 
 from typing import Iterator, List, Optional, Sequence, Tuple, Union
 
-from . import typechecking
-from .broadcastmanager import CyclicSendTaskABC, ThreadBasedCyclicSendTask
-from .message import Message
+from can import typechecking
+from can.broadcastmanager import CyclicSendTaskABC, ThreadBasedCyclicSendTask
+from can.message import Message
 
 from abc import ABCMeta, abstractmethod
 import logging
