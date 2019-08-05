@@ -7,6 +7,7 @@ This module contains the implementation of `can.Listener` and some readers.
 from typing import AsyncIterator, Awaitable, Optional, TYPE_CHECKING
 
 from can.message import Message
+
 if TYPE_CHECKING:
     from can.bus import BusABC
 
