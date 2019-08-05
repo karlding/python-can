@@ -38,30 +38,30 @@ class BitTiming:
         btr1: Optional[int] = None,
     ):
         """
-        :param int bitrate:
+        :param bitrate:
             Bitrate in bits/s.
-        :param int f_clock:
+        :param f_clock:
             The CAN system clock frequency in Hz.
             Usually the oscillator frequency divided by 2.
-        :param int brp:
+        :param brp:
             Bit Rate Prescaler. Prefer to use bitrate and f_clock instead.
-        :param int tseg1:
+        :param tseg1:
             Time segment 1, that is, the number of quanta from (but not including)
             the Sync Segment to the sampling point.
-        :param int tseg2:
+        :param tseg2:
             Time segment 2, that is, the number of quanta from the sampling
             point to the end of the bit.
-        :param int sjw:
+        :param sjw:
             The Synchronization Jump Width. Decides the maximum number of time quanta
             that the controller can resynchronize every bit.
-        :param int nof_samples:
+        :param nof_samples:
             Either 1 or 3. Some CAN controllers can also sample each bit three times.
             In this case, the bit will be sampled three quanta in a row,
             with the last sample being taken in the edge between TSEG1 and TSEG2.
             Three samples should only be used for relatively slow baudrates.
-        :param int btr0:
+        :param btr0:
             The BTR0 register value used by many CAN controllers.
-        :param int btr1:
+        :param btr1:
             The BTR1 register value used by many CAN controllers.
         """
         self._bitrate = bitrate
