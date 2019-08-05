@@ -41,9 +41,7 @@ class CyclicSendTaskABC(CyclicTask):
     """
 
     def __init__(
-        self,
-        messages: Union[Sequence[can.message.Message], can.message.Message],
-        period: float,
+        self, messages: Union[Sequence[can.Message], can.Message], period: float
     ):
         """
         :param messages:
@@ -59,8 +57,8 @@ class CyclicSendTaskABC(CyclicTask):
 
     @staticmethod
     def _check_and_convert_messages(
-        messages: Union[Sequence[can.message.Message], can.message.Message]
-    ) -> Tuple[can.message.Message, ...]:
+        messages: Union[Sequence[can.Message], can.Message]
+    ) -> Tuple[can.Message, ...]:
         """Helper function to convert a Message or Sequence of messages into a
         tuple, and raises an error when the given value is invalid.
 
@@ -70,7 +68,7 @@ class CyclicSendTaskABC(CyclicTask):
         Should be called when the cyclic task is initialized
         """
         if not isinstance(messages, (list, tuple)):
-            if isinstance(messages, can.message.Message):
+            if isinstance(messages, can.Message):
                 messages = [messages]
             else:
                 raise ValueError("Must be either a list, tuple, or a Message")
@@ -96,7 +94,7 @@ class CyclicSendTaskABC(CyclicTask):
 class LimitedDurationCyclicSendTaskABC(CyclicSendTaskABC):
     def __init__(
         self,
-        messages: Union[Sequence[can.message.Message], can.message.Message],
+        messages: Union[Sequence[can.Message], can.Message],
         period: float,
         duration: Optional[float],
     ):
@@ -125,7 +123,7 @@ class RestartableCyclicTaskABC(CyclicSendTaskABC):
 class ModifiableCyclicTaskABC(CyclicSendTaskABC):
     """Adds support for modifying a periodic message"""
 
-    def _check_modified_messages(self, messages: Tuple[can.message.Message, ...]):
+    def _check_modified_messages(self, messages: Tuple[can.Message, ...]):
         """Helper function to perform error checking when modifying the data in
         the cyclic task.
 
@@ -145,9 +143,7 @@ class ModifiableCyclicTaskABC(CyclicSendTaskABC):
                 "from when the task was created"
             )
 
-    def modify_data(
-        self, messages: Union[Sequence[can.message.Message], can.message.Message]
-    ):
+    def modify_data(self, messages: Union[Sequence[can.Message], can.Message]):
         """Update the contents of the periodically sent messages, without
         altering the timing.
 
@@ -173,7 +169,7 @@ class MultiRateCyclicSendTaskABC(CyclicSendTaskABC):
     def __init__(
         self,
         channel: can.typechecking.Channel,
-        messages: Union[Sequence[can.message.Message], can.message.Message],
+        messages: Union[Sequence[can.Message], can.Message],
         count: int,
         initial_period: float,
         subsequent_period: float,
@@ -201,7 +197,7 @@ class ThreadBasedCyclicSendTask(
         self,
         bus: "can.bus.BusABC",
         lock: threading.Lock,
-        messages: Union[Sequence[can.message.Message], can.message.Message],
+        messages: Union[Sequence[can.Message], can.Message],
         period: float,
         duration: Optional[float] = None,
     ):
