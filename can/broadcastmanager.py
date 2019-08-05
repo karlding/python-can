@@ -7,11 +7,13 @@ The main entry point to these classes should be through
 :meth:`can.BusABC.send_periodic`.
 """
 
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union, TYPE_CHECKING
 
 from . import typechecking
-from . import bus
 from .message import Message
+
+if TYPE_CHECKING:
+    from .bus import BusABC
 
 import abc
 import logging
@@ -193,7 +195,7 @@ class ThreadBasedCyclicSendTask(
 
     def __init__(
         self,
-        bus: "bus.BusABC",
+        bus: "BusABC",
         lock: threading.Lock,
         messages: Union[Sequence[Message], Message],
         period: float,
