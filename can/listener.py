@@ -4,7 +4,7 @@
 This module contains the implementation of `can.Listener` and some readers.
 """
 
-from typing import Optional
+from typing import AsyncIterator, Awaitable, Optional
 
 from .message import Message
 from .bus import BusABC
@@ -66,11 +66,10 @@ class Listener(metaclass=ABCMeta):
 class RedirectReader(Listener):
     """
     A RedirectReader sends all received messages to another Bus.
+
     """
 
-    def __init__(self, bus: BusABC):
-        """
-        """
+    def __init__(self, bus: "BusABC"):
         self.bus = bus
 
     def on_message_received(self, msg: Message):
@@ -160,8 +159,8 @@ class AsyncBufferedReader(Listener):
         """
         return await self.buffer.get()
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncIterator[Message]:
         return self
 
-    def __anext__(self):
+    def __anext__(self) -> Awaitable[Message]:
         return self.buffer.get()
