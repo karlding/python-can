@@ -4,7 +4,8 @@ import typing
 
 import mypy_extensions
 
-import os
+if typing.TYPE_CHECKING:
+    import os
 
 import can.bit_timing
 
