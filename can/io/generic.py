@@ -28,7 +28,7 @@ class BaseIOHandler(metaclass=ABCMeta):
         """
         :param file: a path-like object to open a file, a file-like object
                      to be used as a file or `None` to not use a file at all
-        :param str mode: the mode that should be used to open the file, see
+        :param mode: the mode that should be used to open the file, see
                          :func:`open`, ignored if *file* is `None`
         """
         if isinstance(file, (str, os.PathLike)):
@@ -41,10 +41,10 @@ class BaseIOHandler(metaclass=ABCMeta):
         # for multiple inheritance
         super().__init__()
 
-    def __enter__(self):
+    def __enter__(self) -> "BaseIOHandler":
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any):
         self.stop()
 
     def stop(self):
