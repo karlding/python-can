@@ -36,10 +36,10 @@ class Notifier:
             many listeners carry out flush operations to persist data.
 
 
-        :param can.BusABC bus: A :ref:`bus` or a list of buses to listen to.
-        :param list listeners: An iterable of :class:`~can.Listener`
-        :param float timeout: An optional maximum number of seconds to wait for any message.
-        :param asyncio.AbstractEventLoop loop:
+        :param bus: A :ref:`bus` or a list of buses to listen to.
+        :param listeners: An iterable of :class:`~can.Listener`
+        :param timeout: An optional maximum number of seconds to wait for any message.
+        :param loop:
             An :mod:`asyncio` event loop to schedule listeners in.
         """
         self.listeners = list(listeners)
@@ -61,7 +61,7 @@ class Notifier:
     def add_bus(self, bus: BusABC):
         """Add a bus for notification.
 
-        :param can.BusABC bus:
+        :param bus:
             CAN bus instance.
         """
         if (
@@ -86,7 +86,7 @@ class Notifier:
         """Stop notifying Listeners when new :class:`~can.Message` objects arrive
         and call :meth:`~can.Listener.stop` on each Listener.
 
-        :param float timeout:
+        :param timeout:
             Max time in seconds to wait for receive threads to finish.
             Should be longer than timeout given at instantiation.
         """
@@ -147,8 +147,7 @@ class Notifier:
         If it is already present, it will be called two times
         each time a message arrives.
 
-        :param can.Listener listener: Listener to be added to
-                         the list to be notified
+        :param listener: Listener to be added to the list to be notified
         """
         self.listeners.append(listener)
 
@@ -157,8 +156,7 @@ class Notifier:
         trows an exception if the given listener is not part of the
         stored listeners.
 
-        :param can.Listener listener: Listener to be removed from
-                         the list to be notified
+        :param listener: Listener to be removed from the list to be notified
         :raises ValueError: if `listener` was never added to this notifier
         """
         self.listeners.remove(listener)
