@@ -21,7 +21,7 @@ env:
 
 install:
   - if [[ "$TEST_SOCKETCAN" ]]; then sudo bash test/open_vcan.sh ; fi
-  - if [ -z ${HOST_ARM64+x} ]; then travis_retry pip install .[test]; else travis_retry pip3 install .[test] fi
+  - if [ -z ${HOST_ARM64+x} ]; then travis_retry pip install .[test]; else travis_retry pip3 install .[test]; fi
 
 script:
   - if [ -z ${HOST_ARM64+x} ]; then
