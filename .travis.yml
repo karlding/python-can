@@ -64,7 +64,6 @@ jobs:
       os: linux
       arch: aarch64
       sudo: required
-      env: TEST_SOCKETCAN=TRUE
 
     # testing on OSX
     - stage: test
