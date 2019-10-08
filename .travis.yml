@@ -63,7 +63,26 @@ jobs:
       name: SocketCAN arm64
       os: linux
       arch: arm64
+      language: generic
       sudo: required
+      addons:
+        apt:
+          update: true
+      before_install:
+        - sudo apt install -y python3 python3-pip
+      install:
+        - if [[ "$TEST_SOCKETCAN" ]]; then sudo bash test/open_vcan.sh ; fi
+        - travis_retry pip3 install .[test]
+      script:
+        - |
+          # Run the tests
+          python3 setup.py test
+          # preserve the error code
+          RETURN_CODE=$?
+          # Upload the coverage to codecov.io
+          codecov -X gcov
+          # set error code
+          (exit $RETURN_CODE);
 
     # testing on OSX
     - stage: test
