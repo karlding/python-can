@@ -60,9 +60,9 @@ jobs:
       env: TEST_SOCKETCAN=TRUE
 
     - stage: test
-      name: SocketCAN aarch64
+      name: SocketCAN arm64
       os: linux
-      arch: aarch64
+      arch: arm64
       sudo: required
 
     # testing on OSX
