@@ -71,7 +71,8 @@ jobs:
       env: HOST_ARM64=TRUE
       before_install:
         - sudo apt install -y python3 python3-pip
-        - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+        - sudo update-alternatives --install /usr/bin/python python $(which python3) 10
+        - sudo update-alternatives --install /usr/bin/pip pip $(which pip3) 10
 
     # testing on OSX
     - stage: test
