@@ -16,10 +16,6 @@ python:
   # PyPy:
   - pypy3
 
-arch:
-  - amd64
-  - arm64
-
 env:
 
 
@@ -57,8 +53,17 @@ jobs:
     - stage: test
       name: Socketcan
       os: linux
+      arch: amd64
       dist: trusty
       python: "3.6"
+      sudo: required
+      env: TEST_SOCKETCAN=TRUE
+
+    - stage: test
+      name: SocketCAN aarch64
+      os: linux
+      arch: aarch64
+      dist: trusty
       sudo: required
       env: TEST_SOCKETCAN=TRUE
 
