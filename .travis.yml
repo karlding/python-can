@@ -63,7 +63,6 @@ jobs:
       name: SocketCAN aarch64
       os: linux
       arch: aarch64
-      dist: trusty
       sudo: required
       env: TEST_SOCKETCAN=TRUE
 
