@@ -16,6 +16,10 @@ python:
   # PyPy:
   - pypy3
 
+arch:
+  - amd64
+  - arm64
+
 env:
 
 
