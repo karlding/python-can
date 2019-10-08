@@ -21,12 +21,12 @@ env:
 
 install:
   - if [[ "$TEST_SOCKETCAN" ]]; then sudo bash test/open_vcan.sh ; fi
-  - travis_retry pip install .[test]
+  - if [ -z ${HOST_ARM64+x} ]; then travis_retry pip install .[test]; else travis_retry pip3 install .[test] fi
 
 script:
   - |
     # Run the tests
-    python setup.py test
+    if [ -z ${HOST_ARM64+x} ]; then python setup.py test; else python3 setup.py test; fi
     # preserve the error code
     RETURN_CODE=$?
     # Upload the coverage to codecov.io
@@ -68,6 +68,7 @@ jobs:
       addons:
         apt:
           update: true
+      env: HOST_ARM64=TRUE
       before_install:
         - sudo apt install -y python3 python3-pip
       install:
