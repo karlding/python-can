@@ -24,28 +24,15 @@ install:
   - if [ -z ${HOST_ARM64+x} ]; then travis_retry pip install .[test]; else travis_retry pip3 install .[test]; fi
 
 script:
-  - if [ -z ${HOST_ARM64+x} ]; then
-    |
+  - |
     # Run the tests
-    python setup.py test
+    if [ -z ${HOST_ARM64+x} ]; then python setup.py test; else python3 setup.py test; fi
     # preserve the error code
     RETURN_CODE=$?
     # Upload the coverage to codecov.io
     codecov -X gcov
     # set error code
     (exit $RETURN_CODE);
-  fi
-  - if [ -n ${HOST_ARM64+x} ]; then
-    |
-    # Run the tests
-    python3 setup.py test
-    # preserve the error code
-    RETURN_CODE=$?
-    # Upload the coverage to codecov.io
-    codecov -X gcov
-    # set error code
-    (exit $RETURN_CODE);
-  fi
 
 
 jobs:
