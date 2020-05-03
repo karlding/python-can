@@ -2,6 +2,9 @@
 Interface for Chinese Robotell compatible interfaces (win32/linux).
 """
 
+from typing import List, Optional, Tuple
+from can import typechecking
+
 import time
 import logging
 
@@ -52,24 +55,30 @@ class robotellBus(BusABC):
     _CAN_REMOTE_FRAME = 1  # Request remote frame
 
     def __init__(
-        self, channel, ttyBaudrate=115200, bitrate=None, rtscts=False, **kwargs
-    ):
+        self,
+        channel: typechecking.ChannelStr,
+        ttyBaudrate: int = 115200,
+        bitrate: Optional[int] = None,
+        rtscts: bool = False,
+        **kwargs
+    ) -> None:
         """
-        :param str channel:
+        :param channel:
             port of underlying serial or usb device (e.g. /dev/ttyUSB0, COM8, ...)
             Must not be empty.
-        :param int ttyBaudrate:
+        :param ttyBaudrate:
             baudrate of underlying serial or usb device
-        :param int bitrate:
+        :param bitrate:
             CAN Bitrate in bit/s. Value is stored in the adapter and will be used as default if no bitrate is specified
-        :param bool rtscts:
+        :param rtscts:
             turn hardware handshake (RTS/CTS) on and off
         """
 
         if not channel:  # if None or empty
             raise TypeError("Must specify a serial port.")
         if "@" in channel:
-            (channel, ttyBaudrate) = channel.split("@")
+            (channel, baudrate) = channel.split("@")
+            ttyBaudrate = int(baudrate)
         self.serialPortOrig = serial.serial_for_url(
             channel, baudrate=ttyBaudrate, rtscts=rtscts
         )
@@ -78,8 +87,8 @@ class robotellBus(BusABC):
         self._loopback_test = channel == "loop://"
 
         self._rxbuffer = bytearray()  # raw bytes from the serial port
-        self._rxmsg = []  # extracted CAN messages waiting to be read
-        self._configmsg = []  # extracted config channel messages
+        self._rxmsg: List[bytearray] = []  # extracted CAN messages waiting to be read
+        self._configmsg: List[bytearray] = []  # extracted config channel messages
 
         self._writeconfig(self._CAN_RESET_ID, 0)  # Not sure if this is really necessary
 
@@ -94,10 +103,10 @@ class robotellBus(BusABC):
 
         super().__init__(channel=channel, **kwargs)
 
-    def set_bitrate(self, bitrate):
+    def set_bitrate(self, bitrate: int) -> None:
         """
         :raise ValueError: if *bitrate* is greater than 1000000
-        :param int bitrate:
+        :param bitrate:
             Bitrate in bit/s
         """
         if bitrate <= self._MAX_CAN_BAUD:
@@ -107,41 +116,48 @@ class robotellBus(BusABC):
                 "Invalid bitrate, must be less than " + str(self._MAX_CAN_BAUD)
             )
 
-    def set_auto_retransmit(self, retrans_flag):
+    def set_auto_retransmit(self, retrans_flag: bool) -> None:
         """
-        :param bool retrans_flag:
+        :param retrans_flag:
             Enable/disable automatic retransmission of unacknowledged CAN frames
         """
         self._writeconfig(self._CAN_ART_ID, 1 if retrans_flag else 0)
 
-    def set_auto_bus_management(self, auto_man):
+    def set_auto_bus_management(self, auto_man: bool) -> None:
         """
-        :param bool auto_man:
+        :param auto_man:
             Enable/disable automatic bus management
         """
         ## Not sure what "automatic bus managemenet" does. Does not seem to control
         ## automatic ACK of CAN frames (listen only mode)
         self._writeconfig(self._CAN_ABOM_ID, 1 if auto_man else 0)
 
-    def set_serial_rate(self, serial_bps):
+    def set_serial_rate(self, serial_bps: int) -> None:
         """
-        :param int serial_bps:
+        :param serial_bps:
             Set the baud rate of the serial port (not CAN) interface
         """
         self._writeconfig(self._CAN_SERIALBPS_ID, serial_bps)
 
-    def set_hw_filter(self, filterid, enabled, msgid_value, msgid_mask, extended_msg):
+    def set_hw_filter(
+        self,
+        filterid: int,
+        enabled: bool,
+        msgid_value: int,
+        msgid_mask: int,
+        extended_msg: bool,
+    ) -> None:
         """
         :raise ValueError: if *filterid* is not between 1 and 14
-        :param int filterid:
+        :param filterid:
             ID of filter (1-14)
-        :param bool enabled:
+        :param enabled:
             This filter is enabled
-        :param int msgid_value:
+        :param msgid_value:
             CAN message ID to filter on. The test unit does not accept an extented message ID unless bit 31 of the ID was set.
-        :param int msgid_mask:
+        :param msgid_mask:
             Mask to apply to CAN messagge ID
-        :param bool extended_msg:
+        :param extended_msg:
             Filter operates on extended format messages
         """
         if filterid < 1 or filterid > 14:
@@ -152,7 +168,7 @@ class robotellBus(BusABC):
             msgid_value += self._CAN_FILTER_EXTENDED if extended_msg else 0
             self._writeconfig(configid, msgid_value, msgid_mask)
 
-    def _getconfigsize(self, configid):
+    def _getconfigsize(self, configid: int) -> int:
         if configid == self._CAN_ART_ID or configid == self._CAN_ABOM_ID:
             return 1
         if configid == self._CAN_BAUD_ID or configid == self._CAN_INIT_FLASH_ID:
@@ -165,7 +181,9 @@ class robotellBus(BusABC):
             return 8
         return 0
 
-    def _readconfig(self, configid, timeout):
+    def _readconfig(
+        self, configid: int, timeout: Optional[float]
+    ) -> Optional[bytearray]:
         self._writemessage(
             msgid=configid,
             msgdata=bytearray(8),
@@ -185,7 +203,7 @@ class robotellBus(BusABC):
             return None
         return newmsg[4:12]
 
-    def _writeconfig(self, configid, value, value2=0):
+    def _writeconfig(self, configid: int, value: int, value2: int = 0) -> None:
         configsize = self._getconfigsize(configid)
         configdata = bytearray(configsize)
         if configsize >= 1:
@@ -215,7 +233,9 @@ class robotellBus(BusABC):
                 + str(configid)
             )
 
-    def _readmessage(self, flushold, cfgchannel, timeout):
+    def _readmessage(
+        self, flushold: bool, cfgchannel: int, timeout: Optional[float]
+    ) -> Optional[bytearray]:
         header = bytearray([self._PACKET_HEAD, self._PACKET_HEAD])
         terminator = bytearray([self._PACKET_TAIL, self._PACKET_TAIL])
 
@@ -291,7 +311,15 @@ class robotellBus(BusABC):
                 if time_left <= 0:
                     return None
 
-    def _writemessage(self, msgid, msgdata, datalen, msgchan, msgformat, msgtype):
+    def _writemessage(
+        self,
+        msgid: int,
+        msgdata: bytearray,
+        datalen: int,
+        msgchan: int,
+        msgformat: int,
+        msgtype: int,
+    ) -> None:
         msgbuf = bytearray(17)  # Message structure plus checksum byte
 
         msgbuf[0] = msgid & 0xFF
@@ -330,14 +358,16 @@ class robotellBus(BusABC):
         self.serialPortOrig.write(packet)
         self.serialPortOrig.flush()
 
-    def flush(self):
+    def flush(self) -> None:
         del self._rxbuffer[:]
         del self._rxmsg[:]
         del self._configmsg[:]
         while self.serialPortOrig.in_waiting:
             self.serialPortOrig.read()
 
-    def _recv_internal(self, timeout):
+    def _recv_internal(
+        self, timeout: Optional[float]
+    ) -> Tuple[Optional[Message], bool]:
         msgbuf = self._readmessage(False, False, timeout)
         if msgbuf is not None:
             msg = Message(
@@ -354,7 +384,7 @@ class robotellBus(BusABC):
             return msg, False
         return None, False
 
-    def send(self, msg, timeout=None):
+    def send(self, msg: Message, timeout: Optional[float] = None):
         if timeout != self.serialPortOrig.write_timeout:
             self.serialPortOrig.write_timeout = timeout
         self._writemessage(
@@ -366,21 +396,19 @@ class robotellBus(BusABC):
             self._CAN_REMOTE_FRAME if msg.is_remote_frame else self._CAN_DATA_FRAME,
         )
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.serialPortOrig.close()
 
-    def fileno(self):
+    def fileno(self) -> int:
         if hasattr(self.serialPortOrig, "fileno"):
             return self.serialPortOrig.fileno()
         # Return an invalid file descriptor on Windows
         return -1
 
-    def get_serial_number(self, timeout):
+    def get_serial_number(self, timeout: Optional[int]) -> Optional[str]:
         """Get serial number of the slcan interface.
-        :type timeout: int or None
         :param timeout:
             seconds to wait for serial number or None to wait indefinitely
-        :rtype str or None
         :return:
             None on timeout or a str object.
         """
