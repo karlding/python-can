@@ -63,6 +63,7 @@ jobs:
     # testing on OSX
     - stage: test
       os: osx
+      language: generic
       addons:
         homebrew:
           packages:
