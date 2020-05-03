@@ -63,8 +63,10 @@ jobs:
     # testing on OSX
     - stage: test
       os: osx
-      osx_image: xcode8.3
-      python: 3.6-dev
+      addons:
+        homebrew:
+          packages:
+            - python
 
     - stage: documentation
       name: "Sphinx Build"
