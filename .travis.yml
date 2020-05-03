@@ -62,7 +62,9 @@ jobs:
 
     # testing on OSX
     # Travis CI dropped support for Python builds on macOS, so we install it
-    # from Homebrew.
+    # from Homebrew, and then let Poetry find it instead of dealing with
+    # symlinking or trying to replace the system Python, or using custom logic
+    # for macOS.
     # https://docs.travis-ci.com/user/languages/python/
     - stage: test
       os: osx
@@ -71,9 +73,7 @@ jobs:
         homebrew:
           packages:
             - python
-      before_install:
-        - export PATH="/usr/local/opt/python/libexec/bin:$PATH"
-        - export PATH=/usr/local/bin:/usr/local/sbin:$PATH
+          update: true
 
     - stage: documentation
       name: "Sphinx Build"
