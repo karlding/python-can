@@ -96,12 +96,15 @@ setup(
     # Package data
     package_data={
         "": ["README.rst", "CONTRIBUTORS.txt", "LICENSE.txt", "CHANGELOG.txt"],
+        "can": ["py.typed"],
         "doc": ["*.*"],
         "examples": ["*.py"],
     },
     # Installation
     # see https://www.python.org/dev/peps/pep-0345/#version-specifiers
     python_requires=">=3.6",
+    # https://mypy.readthedocs.io/en/stable/installed_packages.html#making-pep-561-compatible-packages
+    zip_safe=False,
     install_requires=[
         "wrapt~=1.10",
         "aenum",
